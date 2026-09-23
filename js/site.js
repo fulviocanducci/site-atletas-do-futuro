@@ -13,7 +13,96 @@
     initScrollAnimations();
     initCountUp();
     initMobileMenu();
+    initGalleryLightbox();
+    initDemoContactForm();
+    initTransparencyAccordion();
   });
+
+  /* ---------- Gallery Lightbox ---------- */
+  function initGalleryLightbox() {
+    var modal = document.getElementById('galleryLightbox');
+    if (!modal) return;
+
+    var image = modal.querySelector('.gallery-lightbox-image');
+    var caption = modal.querySelector('.gallery-lightbox-caption');
+    var status = modal.querySelector('.gallery-lightbox-status');
+    var indexLabel = modal.querySelector('.gallery-lightbox-index');
+    var photos = Array.prototype.slice.call(document.querySelectorAll('.photo-tile[data-gallery-image]'));
+    var previous = modal.querySelector('[data-gallery-prev]');
+    var next = modal.querySelector('[data-gallery-next]');
+    var currentIndex = 0;
+    if (!image || !photos.length) return;
+
+    function showPhoto(index) {
+      currentIndex = (index + photos.length) % photos.length;
+      var trigger = photos[currentIndex];
+
+      image.classList.add('d-none');
+      if (status) {
+        status.hidden = false;
+        status.textContent = 'Carregando foto...';
+      }
+
+      image.onload = function () {
+        image.classList.remove('d-none');
+        if (status) status.hidden = true;
+      };
+      image.onerror = function () {
+        image.classList.add('d-none');
+        if (status) status.textContent = 'Não foi possível carregar esta foto.';
+      };
+
+      image.alt = trigger.getAttribute('data-gallery-alt') || '';
+      image.src = trigger.getAttribute('data-gallery-image');
+      if (caption) caption.textContent = image.alt;
+      if (indexLabel) indexLabel.textContent = 'Foto ' + (currentIndex + 1) + ' de ' + photos.length;
+    }
+
+    modal.addEventListener('show.bs.modal', function (event) {
+      var trigger = event.relatedTarget;
+      if (!trigger) return;
+      var index = photos.indexOf(trigger);
+      showPhoto(index >= 0 ? index : 0);
+    });
+
+    modal.addEventListener('hidden.bs.modal', function () {
+      image.removeAttribute('src');
+      image.classList.add('d-none');
+    });
+
+    if (previous) previous.addEventListener('click', function () { showPhoto(currentIndex - 1); });
+    if (next) next.addEventListener('click', function () { showPhoto(currentIndex + 1); });
+
+    modal.addEventListener('keydown', function (event) {
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        showPhoto(currentIndex - 1);
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        showPhoto(currentIndex + 1);
+      }
+    });
+
+    if (previous) previous.disabled = photos.length < 2;
+    if (next) next.disabled = photos.length < 2;
+  }
+
+  /* ---------- Frontend-only Contact Form ---------- */
+  function initDemoContactForm() {
+    var form = document.querySelector('[data-demo-form]');
+    if (!form) return;
+
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+      var status = document.getElementById('form-status');
+      if (status) {
+        status.textContent = 'Este formulário é demonstrativo e ainda não envia mensagens. Entre em contato pelo e-mail ou telefone informado nesta página.';
+      }
+    });
+
+    var submit = form.querySelector('[type="submit"]');
+    if (submit) submit.disabled = false;
+  }
 
   /* ---------- Mobile Menu ---------- */
   function initMobileMenu() {
@@ -34,12 +123,35 @@
       }
     }
 
-    menuClose.addEventListener('click', closeMenu);
+    menuClose.addEventListener('click', function () {
+      closeMenu();
+      if (menuToggler) menuToggler.focus();
+    });
 
     document.addEventListener('keydown', function (event) {
-      if (event.key === 'Escape' && navbarCollapse.classList.contains('show')) {
+      if (!navbarCollapse.classList.contains('show')) return;
+
+      if (event.key === 'Escape') {
         closeMenu();
         if (menuToggler) menuToggler.focus();
+      } else if (event.key === 'Tab') {
+        var focusable = navbarCollapse.querySelectorAll('a[href], button:not([disabled])');
+        var first = focusable[0];
+        var last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    });
+
+    window.addEventListener('resize', function () {
+      if (window.innerWidth >= 992 && navbarCollapse.classList.contains('show')) {
+        closeMenu();
+        document.body.style.overflow = '';
       }
     });
 
@@ -138,6 +250,31 @@
 
     animatedElements.forEach(function (el) {
       observer.observe(el);
+    });
+  }
+
+   /* ---------- Transparency Accordion (auto-collapse others) ---------- */
+  function initTransparencyAccordion() {
+    if (typeof bootstrap === 'undefined') return;
+
+    var collapseElements = document.querySelectorAll('.document-card .collapse');
+    if (!collapseElements.length) return;
+
+    collapseElements.forEach(function (collapseEl) {
+      collapseEl.addEventListener('show.bs.collapse', function () {
+        var currentCard = this.closest('.document-card');
+        var parent = currentCard.closest('.content-panel, .transparency-list');
+        if (!parent) return;
+
+        var others = parent.querySelectorAll('.document-card .collapse');
+        others.forEach(function (otherCollapse) {
+          var otherCard = otherCollapse.closest('.document-card');
+          if (otherCard !== currentCard) {
+            var bsCollapse = bootstrap.Collapse.getInstance(otherCollapse);
+            if (bsCollapse) bsCollapse.hide();
+          }
+        });
+      });
     });
   }
 
