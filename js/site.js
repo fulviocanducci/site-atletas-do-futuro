@@ -16,6 +16,7 @@
     initGalleryLightbox();
     initDemoContactForm();
     initTransparencyAccordion();
+    initTransparencyYearSwitcher();
   });
 
   /* ---------- Gallery Lightbox ---------- */
@@ -253,19 +254,139 @@
     });
   }
 
-   /* ---------- Transparency Accordion (auto-collapse others) ---------- */
+   /* ---------- Transparency Accordion (custom, fade + slide) ----------
+      Abandons Bootstrap Collapse for these cards on purpose: Bootstrap
+      animates inline `height` and toggles `.show`/`.collapsing`, so margins
+      and paddings that only render at the end of the transition cause the
+      visible "jump" at the end of opening. The custom panel reserves zero
+      space when closed and animates grid rows + opacity + translate, so the
+      animation ends EXACTLY at the content size. Also auto-collapses
+      siblings and keeps full keyboard + reduced-motion support. */
   function initTransparencyAccordion() {
-    if (typeof bootstrap === 'undefined') return;
+    var groups = document.querySelectorAll('[data-transparency-accordion]');
+    var scopedGroups = groups.length ? groups : [document];
+    var togglesBound = 0;
 
+    scopedGroups.forEach(function (scope) {
+      var cards = scope.querySelectorAll('.document-card[data-accordion-toggle]');
+      if (!cards.length) return;
+
+      cards.forEach(function (card) {
+        if (card.dataset.accordionBound === 'true') return;
+        card.dataset.accordionBound = 'true';
+        togglesBound += 1;
+
+        var panelId = card.getAttribute('aria-controls');
+        var panel = panelId ? scope.querySelector('#' + CSS.escape(panelId)) : card.querySelector('[data-accordion-panel]');
+        if (!panel) return;
+
+        var animating = false;
+
+        function isOpen() {
+          return card.classList.contains('is-open') && !panel.hidden;
+        }
+
+        function afterTransition(targetPanel, callback) {
+          var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          if (reduceMotion) {
+            callback();
+            return;
+          }
+          var done = false;
+          function finish(event) {
+            if (event && event.target !== targetPanel) return;
+            if (done) return;
+            done = true;
+            targetPanel.removeEventListener('transitionend', finish);
+            callback();
+          }
+          targetPanel.addEventListener('transitionend', finish);
+          window.setTimeout(finish, 480);
+        }
+
+        function open(instant) {
+          card.classList.add('is-open');
+          card.setAttribute('aria-expanded', 'true');
+          panel.hidden = false;
+          void panel.offsetHeight;
+          requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+              card.classList.add('is-open');
+              if (instant) {
+                animating = false;
+              } else {
+                afterTransition(panel, function () { animating = false; });
+              }
+            });
+          });
+        }
+
+        function close(instant) {
+          card.classList.remove('is-open');
+          card.setAttribute('aria-expanded', 'false');
+          if (instant) {
+            panel.hidden = true;
+            animating = false;
+            return;
+          }
+          afterTransition(panel, function () {
+            if (!card.classList.contains('is-open')) panel.hidden = true;
+            animating = false;
+          });
+        }
+
+        function toggle() {
+          if (animating) return;
+          animating = true;
+          var shouldOpen = !isOpen();
+
+          if (shouldOpen) {
+            var siblings = scope.querySelectorAll('.document-card[data-accordion-toggle].is-open');
+            siblings.forEach(function (sibling) {
+              if (sibling === card) return;
+              sibling.classList.remove('is-open');
+              sibling.setAttribute('aria-expanded', 'false');
+              var siblingId = sibling.getAttribute('aria-controls');
+              var siblingPanel = siblingId ? scope.querySelector('#' + CSS.escape(siblingId)) : null;
+              if (siblingPanel) {
+                (function (sib, sibPanel) {
+                  afterTransition(sibPanel, function () {
+                    if (!sib.classList.contains('is-open')) sibPanel.hidden = true;
+                  });
+                })(sibling, siblingPanel);
+              }
+            });
+            open(false);
+          } else {
+            close(false);
+          }
+        }
+
+        card.addEventListener('click', function (event) {
+          if (event.target.closest('a, button')) return;
+          toggle();
+        });
+
+        card.addEventListener('keydown', function (event) {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            toggle();
+          }
+        });
+      });
+    });
+
+    if (togglesBound) return;
+
+    /* Fallback: keep legacy Bootstrap-driven cards working if present. */
+    if (typeof bootstrap === 'undefined') return;
     var collapseElements = document.querySelectorAll('.document-card .collapse');
     if (!collapseElements.length) return;
-
     collapseElements.forEach(function (collapseEl) {
       collapseEl.addEventListener('show.bs.collapse', function () {
         var currentCard = this.closest('.document-card');
         var parent = currentCard.closest('.content-panel, .transparency-list');
         if (!parent) return;
-
         var others = parent.querySelectorAll('.document-card .collapse');
         others.forEach(function (otherCollapse) {
           var otherCard = otherCollapse.closest('.document-card');
@@ -276,6 +397,50 @@
         });
       });
     });
+  }
+
+  /* ---------- Transparency Year Switcher ----------
+     Alterna as listas de documentos por ano (data-year-panel).
+     Ao trocar, o painel do ano anterior é ocultado com todas as
+     sanfonas fechadas, e o novo entra com fade curto. */
+  function initTransparencyYearSwitcher() {
+    var select = document.querySelector('[data-year-select]');
+    if (!select) return;
+
+    var panels = Array.prototype.slice.call(document.querySelectorAll('[data-year-panel]'));
+    if (!panels.length) return;
+
+    function closeCard(card) {
+      card.classList.remove('is-open');
+      card.setAttribute('aria-expanded', 'false');
+      var panelId = card.getAttribute('aria-controls');
+      var body = panelId ? document.getElementById(panelId) : card.querySelector('[data-accordion-panel]');
+      if (body) body.hidden = true;
+    }
+
+    function showYear(year, animate) {
+      panels.forEach(function (panel) {
+        var isTarget = panel.getAttribute('data-year-panel') === year;
+        if (isTarget) {
+          panel.hidden = false;
+          if (animate) {
+            panel.classList.add('is-entering');
+            panel.addEventListener('animationend', function () {
+              panel.classList.remove('is-entering');
+            }, { once: true });
+          }
+        } else {
+          panel.hidden = true;
+          panel.querySelectorAll('.document-card.is-open').forEach(closeCard);
+        }
+      });
+    }
+
+    select.addEventListener('change', function () {
+      showYear(this.value, true);
+    });
+
+    showYear(select.value, false);
   }
 
   /* ---------- Count Up Animation ---------- */

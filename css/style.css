@@ -8,6 +8,7 @@
   --bf-primary: #1B6B3A;
   --bf-primary-dark: #145A2E;
   --bf-primary-light: #23804A;
+  --bf-primary-soft: rgba(27, 107, 58, 0.22);
   --bf-secondary: #E8A838;
   --bf-cta: #D84315;
   --bf-cta-dark: #B8380F;
@@ -344,17 +345,37 @@ p {
   color: rgba(255, 255, 255, 0.9);
   font-size: 0.875rem;
   font-weight: 500;
-  padding: var(--bf-space-sm) var(--bf-space-md);
-  transition: color var(--bf-transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: var(--bf-space-sm) 12px;
+  margin: 0 2px;
+  border: 1px solid transparent;
+  border-radius: var(--bf-radius-pill);
+  transition: color var(--bf-transition), background-color var(--bf-transition), border-color var(--bf-transition);
 }
 
+/* Ícones do menu: 14px no desktop, 20px no menu mobile (overlay).
+   O currentColor faz o ícone acompanhar o texto (branco/amarelo ativo). */
+.site-header .nav-link-icon {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+
+/* Hover/foco: pílula verde-escura com borda clara (mesma linguagem do CTA). */
 .site-header .nav-link:hover,
-.site-header .nav-link:focus {
-  color: var(--bf-secondary);
+.site-header .nav-link:focus-visible {
+  color: var(--bf-white);
+  background-color: var(--bf-primary-dark);
+  border-color: rgba(255, 255, 255, 0.45);
 }
 
+/* Página atual: pílula sutil com borda no tom de destaque (amarelo). */
 .site-header .nav-link.active {
   color: var(--bf-secondary);
+  background-color: rgba(255, 255, 255, 0.08);
+  border-color: rgba(232, 168, 56, 0.45);
 }
 
 .site-header .navbar-nav .nav-item {
@@ -418,12 +439,43 @@ p {
   .site-header .navbar-nav {
     flex-direction: column;
     align-items: stretch;
+    gap: var(--bf-space-sm);
   }
 
+  /* Pílulas em tela cheia: mesma linguagem visual das pílulas do desktop,
+     sem linhas separadoras — borda sempre visível, hover/foco realça. */
   .site-header .nav-link {
     font-size: 1.25rem;
-    padding: var(--bf-space-md) 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: var(--bf-space-md) var(--bf-space-lg);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--bf-space-sm);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: var(--bf-radius-pill);
+    text-align: center;
+  }
+
+  .site-header .nav-link-icon {
+    display: block;
+    width: 20px;
+    height: 20px;
+  }
+
+  /* No overlay (fundo primary-dark) o hover da pílula desktop seria
+     invisível: aqui usa branco translúcido mais forte. */
+  .site-header .nav-link:hover,
+  .site-header .nav-link:focus-visible {
+    color: var(--bf-white);
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.6);
+  }
+
+  .site-header .nav-link.active {
+    color: var(--bf-secondary);
+    background-color: rgba(232, 168, 56, 0.14);
+    border-color: rgba(232, 168, 56, 0.6);
   }
 
   .site-header .d-flex.align-items-center.gap-2 {
@@ -432,15 +484,18 @@ p {
   }
 }
 
-/* ---------- HERO ---------- */
+/* ---------- HERO ----------
+   Altura dirigida pelo conteúdo (height: auto) + padding fixo:
+   respiro previsível em qualquer viewport, sem depender de vh.
+   padding-top = 72px do header fixo + 40px de respiro visível. */
 .hero {
   position: relative;
-  height: 85vh;
-  min-height: 560px;
-  max-height: 720px;
+  height: auto;
+  min-height: 500px;
   display: flex;
   align-items: center;
   overflow: hidden;
+  padding: 112px 0 72px;
 }
 
 .hero-image {
@@ -721,6 +776,7 @@ p {
 .document-card {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 0;
   background-color: var(--bf-white);
   border: 1px solid transparent;
@@ -729,15 +785,26 @@ p {
   transition: background-color var(--bf-transition), border-color var(--bf-transition), box-shadow var(--bf-transition);
 }
 
+/* Cards-sanfona: altura compacta padrão (~78px, sem altura fixa).
+   O conteúdo (título + ano, 2 linhas) define a altura; padding vertical
+   enxuto garante uniformidade entre todos os cards. Altura final bem
+   acima do alvo mínimo de toque (44px). Borda verde clara de referência. */
+.document-card[data-accordion-toggle] {
+  border-color: var(--bf-primary-soft);
+  min-height: 0;
+  padding: var(--bf-space-md) var(--bf-space-lg);
+}
+
 .document-card[role="button"] {
   cursor: pointer;
 }
 
 .document-card:hover,
 .document-card:focus-within,
-.document-card:has(.collapse.show) {
+.document-card.is-open {
   background-color: var(--bf-offwhite);
   border-color: var(--bf-primary);
+  box-shadow: 0 4px 16px rgba(27, 107, 58, 0.12);
 }
 
 .document-card-header {
@@ -754,6 +821,7 @@ p {
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--bf-primary);
 }
 
 .document-info {
@@ -780,19 +848,31 @@ p {
   justify-content: center;
   width: 32px;
   height: 32px;
+  border-radius: 50%;
   color: var(--bf-gray);
-  transition: color var(--bf-transition), transform var(--bf-transition);
+  background-color: transparent;
+  transition: color var(--bf-transition), background-color var(--bf-transition), transform 360ms cubic-bezier(0.32, 0.72, 0, 1);
   transform-origin: center;
 }
 
-.document-card:has(.collapse.show) .document-accordion-chevron {
+.document-card:hover .document-accordion-chevron {
+  color: var(--bf-primary);
+  background-color: rgba(27, 107, 58, 0.08);
+}
+
+.document-card.is-open .document-accordion-chevron {
   transform: rotate(180deg);
-  color: var(--bf-primary-dark);
+  color: var(--bf-white);
+  background-color: var(--bf-primary);
 }
 
 .transparency .transparency-list .document-card {
-  min-height: 140px;
-  border-color: transparent;
+  min-height: 0;
+}
+
+.transparency .transparency-list .document-card[data-accordion-toggle] {
+  border-color: var(--bf-primary-soft);
+  min-height: 0;
 }
 
 .transparency .transparency-list a.document-card {
@@ -805,50 +885,202 @@ p {
 
 .transparency .transparency-list .document-card:not(a):hover,
 .transparency .transparency-list .document-card:not(a):focus-within,
-.transparency .transparency-list .document-card:not(a):has(.collapse.show) {
+.transparency .transparency-list .document-card:not(a).is-open {
   background-color: var(--bf-offwhite);
   border-color: var(--bf-primary);
+  box-shadow: 0 4px 16px rgba(27, 107, 58, 0.12);
 }
 
-/* ---------- Transparência accordion ---------- */
-.document-card .collapse {
+/* ---------- Transparência accordion ----------
+   Custom accordion (JS-driven, no Bootstrap collapse):
+   - `.document-panel` usa grid rows 0fr -> 1fr: mede o conteúdo real,
+     então a animação de abrir E fechar termina EXATAMENTE no tamanho
+     do conteúdo. Nada de "salto" no final (causa raiz do bug com
+     Bootstrap: height inline + `.collapsing`/`.show` + margens que
+     entravam só no fim da transição).
+   - `hidden` = fechado e sem ocupar espaço; visível = aberto.
+   - `is-open` pilota seta, borda, fundo e revelação dos itens. */
+.document-card .document-panel {
+  display: grid;
+  grid-template-rows: 0fr;
   width: 100%;
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px);
+  transition: grid-template-rows 420ms cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 320ms ease,
+    visibility 0s linear 420ms,
+    transform 420ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-.document-card .collapse.show {
-  display: block;
+.document-card .document-panel[hidden] {
+  display: none;
 }
 
-.document-card .collapse .transparency-accordion-list {
-  margin-top: var(--bf-space-sm);
+.document-card.is-open .document-panel {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition: grid-template-rows 420ms cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 380ms ease 60ms,
+    visibility 0s,
+    transform 420ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.document-panel-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.document-card .transparency-accordion-list {
+  padding-top: var(--bf-space-sm);
 }
 
 .transparency-accordion-list {
   list-style: none;
   margin: 0;
-  padding: var(--bf-space-sm) var(--bf-space-lg) 0;
+  padding: 0;
 }
 
+/* O <li> cuida apenas da animação de entrada (stagger);
+   o <a> assume todo o visual para a linha inteira ser clicável. */
 .transparency-accordion-list li {
-  padding: var(--bf-space-sm) var(--bf-space-md);
   margin-bottom: var(--bf-space-xs);
-  background-color: var(--bf-offwhite);
-  border-radius: var(--bf-radius-sm);
-  color: var(--bf-gray);
-  font-size: 0.95rem;
-  display: flex;
-  align-items: center;
-  gap: var(--bf-space-sm);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 300ms ease, transform 300ms ease;
 }
 
 .transparency-accordion-list li:last-child {
   margin-bottom: 0;
 }
 
-.transparency-accordion-list li::before {
-  content: "•";
+.transparency-accordion-list a {
+  display: flex;
+  align-items: center;
+  gap: var(--bf-space-sm);
+  padding: var(--bf-space-sm) var(--bf-space-md);
+  /* Fundo branco + borda: visível sobre o card aberto (offwhite),
+     tanto na index quanto na transparencia.html. */
+  background-color: var(--bf-white);
+  border: 1px solid var(--bf-border);
+  border-radius: var(--bf-radius-sm);
+  color: var(--bf-gray);
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition: background-color var(--bf-transition), color var(--bf-transition), border-color var(--bf-transition), box-shadow var(--bf-transition);
+}
+
+.transparency-accordion-list a::before {
+  content: none;
+}
+
+/* Seta que desliza para dentro no hover/foco */
+.transparency-accordion-list a::after {
+  content: "→";
+  margin-left: auto;
   color: var(--bf-primary);
-  font-weight: 700;
+  font-weight: 600;
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: opacity var(--bf-transition), transform var(--bf-transition);
+}
+
+.transparency-accordion-list a:hover,
+.transparency-accordion-list a:focus-visible {
+  background-color: rgba(27, 107, 58, 0.06);
+  border-color: var(--bf-primary-soft);
+  color: var(--bf-primary-dark);
+  box-shadow: inset 3px 0 0 var(--bf-primary);
+}
+
+.transparency-accordion-list a:hover::after,
+.transparency-accordion-list a:focus-visible::after {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.transparency-accordion-list a:focus-visible {
+  outline: 3px solid var(--bf-secondary);
+  outline-offset: 2px;
+}
+
+.document-card.is-open .transparency-accordion-list li {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.document-card.is-open .transparency-accordion-list li:nth-child(1) { transition-delay: 120ms; }
+.document-card.is-open .transparency-accordion-list li:nth-child(2) { transition-delay: 170ms; }
+.document-card.is-open .transparency-accordion-list li:nth-child(3) { transition-delay: 220ms; }
+.document-card.is-open .transparency-accordion-list li:nth-child(4) { transition-delay: 270ms; }
+.document-card.is-open .transparency-accordion-list li:nth-child(n+5) { transition-delay: 320ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .document-card .document-panel {
+    grid-template-rows: 1fr;
+  }
+
+  .document-card .document-panel[hidden] {
+    display: none;
+  }
+
+  .document-card .document-panel,
+  .document-card.is-open .document-panel,
+  .transparency-accordion-list li {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* ---------- Transparência: seletor de ano ----------
+   Layout empilhado (label acima, select 12 colunas / 100%)
+   em desktop e mobile. */
+.year-switcher {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--bf-space-xs);
+  margin-top: var(--bf-space-lg);
+}
+
+.year-switcher .form-label {
+  margin: 0;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--bf-gray);
+}
+
+.year-switcher .form-select {
+  width: 100%;
+  border: 1px solid var(--bf-border);
+  border-radius: var(--bf-radius-sm);
+  cursor: pointer;
+}
+
+.year-switcher .form-select:focus {
+  border-color: var(--bf-primary);
+  box-shadow: 0 0 0 3px rgba(27, 107, 58, 0.15);
+}
+
+/* Entrada curta do painel do ano selecionado (só via .is-entering,
+   para não conflitar com a animação de scroll [data-animate]). */
+.transparency-list[data-year-panel].is-entering {
+  animation: year-panel-in 280ms ease;
+}
+
+@keyframes year-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ---------- CTA SECTION ---------- */
@@ -912,12 +1144,16 @@ p {
 }
 
 .footer-title {
+  display: inline-block;
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--bf-white);
   text-transform: uppercase;
   letter-spacing: 1px;
   margin-bottom: var(--bf-space-md);
+  /* Underline na largura do texto (inline-block), na cor de destaque. */
+  padding-bottom: var(--bf-space-xs);
+  border-bottom: 2px solid var(--bf-secondary);
 }
 
 .footer-links {
@@ -929,6 +1165,27 @@ p {
 .footer-links li {
   margin-bottom: var(--bf-space-sm);
   font-size: 0.875rem;
+}
+
+/* Coluna Contato do rodapé: ícone + texto, com quebra segura
+   para o e-mail longo em telas estreitas. */
+.footer-contact li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--bf-space-sm);
+  overflow-wrap: anywhere;
+}
+
+.footer-contact li svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.footer-contact li a {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--bf-space-sm);
 }
 
 .footer-social {
@@ -949,7 +1206,31 @@ p {
   font-size: 0.875rem;
 }
 
+.footer-social a svg {
+  flex-shrink: 0;
+  transition: color var(--bf-transition);
+}
+
 .footer-social a:hover svg {
+  color: var(--bf-secondary);
+}
+
+/* Coluna Navegação do rodapé: ícone + texto, no mesmo idioma
+   da coluna Contato (ícone discreto, amarelo no hover). */
+.footer-nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--bf-space-sm);
+}
+
+.footer-nav a svg {
+  flex-shrink: 0;
+  color: rgba(255, 255, 255, 0.5);
+  transition: color var(--bf-transition);
+}
+
+.footer-nav a:hover svg,
+.footer-nav a:focus-visible svg {
   color: var(--bf-secondary);
 }
 
@@ -1044,8 +1325,8 @@ p {
 /* Tablet */
 @media (min-width: 768px) and (max-width: 1023px) {
   .hero {
-    height: 70vh;
-    min-height: 480px;
+    min-height: 460px;
+    padding: 104px 0 64px;
   }
 
   .hero-title {
@@ -1072,10 +1353,12 @@ p {
 /* Mobile */
 @media (max-width: 767px) {
   .hero {
-    height: auto;
-    min-height: 480px;
-    max-height: none;
-    padding: var(--bf-space-3xl) 0;
+    min-height: 0;
+    padding: 104px 0 72px;
+  }
+
+  .scroll-indicator {
+    bottom: var(--bf-space-md);
   }
 
   .hero-overlay {
@@ -1470,6 +1753,40 @@ p {
   margin-bottom: var(--bf-space-xs);
 }
 
+/* Variante compacta: mantém a identidade visual dos inputs,
+   com padding/font-size reduzidos (alvo de toque segue >= 36px). */
+.contact-form .form-control-sm {
+  padding: 6px var(--bf-space-md);
+  font-size: 0.9375rem;
+  border-radius: var(--bf-radius-sm);
+}
+
+/* Link de e-mail destacado: sublinhado que se expande no hover/foco. */
+.email-link {
+  font-weight: 600;
+  color: var(--bf-primary);
+  text-decoration: none;
+  background-image: linear-gradient(var(--bf-primary), var(--bf-primary));
+  background-repeat: no-repeat;
+  background-position: left 100%;
+  background-size: 0% 2px;
+  padding-bottom: 2px;
+  transition: color var(--bf-transition), background-size var(--bf-transition-slow), background-position var(--bf-transition-slow);
+}
+
+.email-link:hover,
+.email-link:focus-visible {
+  color: var(--bf-primary-dark);
+  background-image: linear-gradient(var(--bf-primary-dark), var(--bf-primary-dark));
+  background-size: 100% 2px;
+}
+
+.email-link:focus-visible {
+  outline: 3px solid var(--bf-secondary);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 .contact-form .form-control,
 .contact-form .form-select {
   border: 1px solid var(--bf-border);
@@ -1481,6 +1798,24 @@ p {
 .contact-form .form-select:focus {
   border-color: var(--bf-primary);
   box-shadow: 0 0 0 3px rgba(27, 107, 58, 0.15);
+}
+
+/* ---------- Validação unobtrusive (jquery.validate.unobtrusive) ---------- */
+.contact-form .input-validation-error,
+.contact-form .input-validation-error:focus {
+  border-color: var(--bf-error);
+  box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.15);
+}
+
+.contact-form .field-validation-valid {
+  display: none;
+}
+
+.contact-form .field-validation-error {
+  display: block;
+  margin-top: var(--bf-space-xs);
+  font-size: 0.8125rem;
+  color: var(--bf-error);
 }
 
 @media (min-width: 768px) and (max-width: 1023px) {
