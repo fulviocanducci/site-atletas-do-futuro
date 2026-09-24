@@ -1,6 +1,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Associação dos Atletas do Futuro de Novo Horizonte — Transformando o futuro através do esporte.">
+<meta name="description" content="<?= htmlspecialchars($page_description ?? 'Associação dos Atletas do Futuro de Novo Horizonte — Transformando o futuro através do esporte.', ENT_QUOTES, 'UTF-8') ?>">
 <title><?= htmlspecialchars($page_title ?? 'Associação dos Atletas do Futuro de Novo Horizonte', ENT_QUOTES, 'UTF-8') ?></title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
